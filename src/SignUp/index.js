@@ -1,11 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRef, useState } from "react";
 
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-} from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 
 import { isEmail, isLength } from "validator";
 
@@ -18,7 +14,7 @@ export default function SignUp({ navigation }) {
 
   const passwordTextInput = useRef();
 
-  function cadastrar() {
+  function signUp() {
     const mistakes = [];
 
     if (!isEmail(email)) mistakes.push("Email Invalido");
@@ -32,24 +28,20 @@ export default function SignUp({ navigation }) {
       return setError(mistakes.join(", "));
     }
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((account) => {
-        auth.signOut();
-      })
-      .catch((error) => {
-        if (error.message === "Firebase: Error (auth/email-already-in-use).") {
-          setTimeout(() => {
-            setError("None");
-          }, 2000);
-          setError("Email already in use");
-        }
-      });
+    createUserWithEmailAndPassword(auth, email, password).catch((error) => {
+      if (error.message === "Firebase: Error (auth/email-already-in-use).") {
+        setTimeout(() => {
+          setError("None");
+        }, 2000);
+        setError("Email already in use");
+      }
+    });
   }
 
   window.onkeydown = (e) => {
     if (e.keyCode === 13) {
       e.preventDefault();
-      cadastrar();
+      signUp();
     }
   };
 
@@ -96,7 +88,7 @@ export default function SignUp({ navigation }) {
           ]}
           ref={passwordTextInput}
           onKeyPress={(e) => {
-            if (e.keyCode === 13) cadastrar();
+            if (e.keyCode === 13) signUp();
           }}
           value={password}
           onChangeText={setPassword}
@@ -119,7 +111,7 @@ export default function SignUp({ navigation }) {
             <Text>Voltar</Text>
           </Pressable>
           <Pressable
-            onPress={cadastrar}
+            onPress={signUp}
             style={{
               width: 100,
               height: 40,
