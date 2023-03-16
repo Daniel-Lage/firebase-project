@@ -1,5 +1,4 @@
 import {
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -21,7 +20,7 @@ export default function SignIn({ navigation }) {
 
   const passwordTextInput = useRef();
 
-  function entrar() {
+  function signIn() {
     if (isEmail(email) && isLength(password, 6)) {
       signInWithEmailAndPassword(auth, email, password).catch(() => {
         setTimeout(() => {
@@ -40,7 +39,7 @@ export default function SignIn({ navigation }) {
   window.onkeydown = (e) => {
     if (e.keyCode === 13) {
       e.preventDefault();
-      entrar();
+      signIn();
     }
   };
 
@@ -87,7 +86,7 @@ export default function SignIn({ navigation }) {
           ]}
           ref={passwordTextInput}
           onKeyPress={(e) => {
-            if (e.keyCode === 13) entrar();
+            if (e.keyCode === 13) signIn();
           }}
           value={password}
           onChangeText={setPassword}
@@ -110,7 +109,7 @@ export default function SignIn({ navigation }) {
             <Text>Cadastrar</Text>
           </Pressable>
           <Pressable
-            onPress={entrar}
+            onPress={signIn}
             style={{
               width: 100,
               height: 40,
