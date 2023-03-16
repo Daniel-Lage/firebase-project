@@ -1,13 +1,16 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
+import { useState } from "react";
 import { initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
-import Login from "./src/Login";
+import SignIn from "./src/SignIn";
 import Home from "./src/Home";
-import Cadastro from "./src/Cadastro";
+import SignUp from "./src/SignUp";
+import PasswordRecovery from "./src/PasswordRecovery";
 
-initializeApp({
+const app = initializeApp({
   apiKey: "AIzaSyD5JYpWfsxBlQnZZAfJy9LxUkKQAH1zsjQ",
   authDomain: "fir-login-9a729.firebaseapp.com",
   projectId: "fir-login-9a729",
@@ -20,22 +23,38 @@ initializeApp({
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  return (
+  const [user, setUser] = useState(null);
+
+  onAuthStateChanged(getAuth(app), (user) => {
+    setUser(user);
+  });
+
+  return user ? (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen
-          name="Login"
-          component={Login}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Cadastro"
-          component={Cadastro}
-          options={{ headerShown: false }}
-        />
+      <Stack.Navigator initialRouteName="Home">
         <Stack.Screen
           name="Home"
           component={Home}
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  ) : (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="SignIn">
+        <Stack.Screen
+          name="SignIn"
+          component={SignIn}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SignUp"
+          component={SignUp}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="PasswordRecovery"
+          component={PasswordRecovery}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -1,16 +1,22 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
 
 import { isEmail, isLength } from "validator";
 
-export default function Cadastro({ navigation }) {
+export default function SignUp({ navigation }) {
   const auth = getAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setErrors] = useState("None");
+  const [error, setError] = useState("None");
+
+  const passwordTextInput = useRef();
 
   function cadastrar() {
     const mistakes = [];
@@ -19,19 +25,39 @@ export default function Cadastro({ navigation }) {
 
     if (!isLength(password, 6)) mistakes.push("Senha abaixo de 6 caracteres");
 
-    if (!mistakes.length) {
-      createUserWithEmailAndPassword(auth, email, password).then((account) => {
-        navigation.navigate("Login");
-      });
+    if (mistakes.length) {
+      setTimeout(() => {
+        setError("None");
+      }, 2000);
+      return setError(mistakes.join(", "));
     }
-    setErrors(mistakes.join(", "));
+
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((account) => {
+        auth.signOut();
+      })
+      .catch((error) => {
+        if (error.message === "Firebase: Error (auth/email-already-in-use).") {
+          setTimeout(() => {
+            setError("None");
+          }, 2000);
+          setError("Email already in use");
+        }
+      });
   }
+
+  window.onkeydown = (e) => {
+    if (e.keyCode === 13) {
+      e.preventDefault();
+      cadastrar();
+    }
+  };
 
   return (
     <>
       <View style={styles.header}>
         <Text style={{ fontWeight: "bold", userSelect: "none" }}>
-          Firebased
+          Firebased - Cadastro
         </Text>
       </View>
       <View style={styles.container}>
@@ -45,31 +71,32 @@ export default function Cadastro({ navigation }) {
           {error}
         </Text>
         <TextInput
-          style={{
-            width: 200,
-            height: 40,
-            borderRadius: 5,
-            textAlign: "center",
-            borderWidth: 2,
-            borderColor:
-              error !== "None" ? "rgb(230, 71, 71)" : "rgb(46, 46, 46)",
-            backgroundColor: "rgb(212, 212, 212)",
-          }}
+          style={[
+            styles.textField,
+            {
+              borderColor:
+                error !== "None" ? "rgb(230, 71, 71)" : "rgb(46, 46, 46)",
+            },
+          ]}
           value={email}
           onChangeText={setEmail}
+          onKeyPress={(e) => {
+            if (e.keyCode === 13) passwordTextInput.current.focus();
+          }}
           placeholder="Email"
         />
         <TextInput
           secureTextEntry={true}
-          style={{
-            width: 200,
-            height: 40,
-            borderRadius: 5,
-            textAlign: "center",
-            borderWidth: 2,
-            borderColor:
-              error !== "None" ? "rgb(230, 71, 71)" : "rgb(46, 46, 46)",
-            backgroundColor: "rgb(212, 212, 212)",
+          style={[
+            styles.textField,
+            {
+              borderColor:
+                error !== "None" ? "rgb(230, 71, 71)" : "rgb(46, 46, 46)",
+            },
+          ]}
+          ref={passwordTextInput}
+          onKeyPress={(e) => {
+            if (e.keyCode === 13) cadastrar();
           }}
           value={password}
           onChangeText={setPassword}
@@ -78,7 +105,8 @@ export default function Cadastro({ navigation }) {
         <View style={{ flexDirection: "row" }}>
           <Pressable
             onPress={() => {
-              navigation.navigate("Login");
+              setError("None");
+              navigation.navigate("SignIn");
             }}
             style={{
               width: 100,
@@ -124,5 +152,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+  },
+  textField: {
+    width: 200,
+    height: 40,
+    borderRadius: 5,
+    textAlign: "center",
+    borderWidth: 2,
+    borderColor: "rgb(46, 46, 46)",
+    backgroundColor: "rgb(212, 212, 212)",
   },
 });
