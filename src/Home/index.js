@@ -8,11 +8,16 @@ import {
 } from "react-native";
 import { useState } from "react";
 
+import { getStorage, ref, uploadBytes } from "firebase/storage";
 import { getAuth, updateProfile, sendEmailVerification } from "firebase/auth";
+
 import { AntDesign } from "@expo/vector-icons";
+import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 
 export default function Home({ navigation }) {
   const auth = getAuth();
+  const storage = getStorage();
+  const images = ref(storage, "images");
 
   const [user, setUser] = useState(auth.currentUser);
   const [name, setName] = useState("");
@@ -26,12 +31,20 @@ export default function Home({ navigation }) {
   );
 
   function configurarImagem() {
-    const url = prompt("Insira o link da sua imagem");
-    updateProfile(user, {
-      photoURL: url,
-    }).then(() => {
-      setPhotoURL(url);
-      setUser(auth.currentUser);
+    launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    }).then((result) => {
+      fetch(result.assets[0].uri)
+        .then((response) => response.blob())
+        .then((image) => {
+          uploadBytes(images, image).then((snapshot) => {
+            console.log(snapshot);
+            console.log("Uploaded a blob or file!");
+          });
+        });
     });
   }
 
