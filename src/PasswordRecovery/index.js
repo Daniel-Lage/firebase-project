@@ -10,8 +10,7 @@ export default function PasswordRecovery({ navigation }) {
 
   const [email, setEmail] = useState("");
 
-
-  function recuperar() {
+  function recover() {
     if (!isEmail(email)) {
       setMessage("Email Invalido");
       setTimeout(() => {
@@ -65,12 +64,12 @@ export default function PasswordRecovery({ navigation }) {
           value={email}
           onChangeText={setEmail}
           onKeyPress={(e) => {
-            if (e.keyCode === 13) recuperar();
+            if (e.keyCode === 13) recover();
           }}
           placeholder="Email"
         />
         <Pressable
-          onPress={recuperar}
+          onPress={recover}
           style={{
             width: 100,
             height: 40,
