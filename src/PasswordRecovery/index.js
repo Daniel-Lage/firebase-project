@@ -13,9 +13,7 @@ export default function PasswordRecovery({ navigation }) {
   function recover() {
     if (!isEmail(email)) {
       setMessage("Email Invalido");
-      setTimeout(() => {
-        setMessage("None");
-      }, 2000);
+      setTimeout(() => setMessage("None"), 2000);
       return;
     }
 

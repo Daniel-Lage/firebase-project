@@ -49,13 +49,14 @@ export default function Home({ navigation }) {
     setDisplayName(nameInputRef.current.value);
   }
 
-  useEffect(() => {
-    updateProfile(user, { displayName: displayName, photoURL: photoURL }).then(
-      () => {
-        setUser(auth.currentUser);
-      }
-    );
-  }, [displayName, photoURL]);
+  useEffect(
+    () =>
+      updateProfile(user, {
+        displayName: displayName,
+        photoURL: photoURL,
+      }).then(() => setUser(auth.currentUser)),
+    [displayName, photoURL]
+  );
 
   return (
     <>
@@ -66,9 +67,7 @@ export default function Home({ navigation }) {
             alignSelf: "flex-start",
             marginLeft: 10,
           }}
-          onPress={() => {
-            auth.signOut();
-          }}
+          onPress={() => auth.signOut()}
         >
           <AntDesign name="back" size={24} color="black" />
         </Pressable>
@@ -119,9 +118,7 @@ export default function Home({ navigation }) {
             </Text>
             <Pressable
               style={{ position: "absolute", alignSelf: "flex-end" }}
-              onPress={() => {
-                setDisplayName(null);
-              }}
+              onPress={() => setDisplayName(null)}
             >
               <AntDesign name="edit" size={24} color="black" />
             </Pressable>
@@ -138,16 +135,13 @@ export default function Home({ navigation }) {
         )}
         {message === "None" || (
           <Pressable
-            onPress={() => {
-              sendEmailVerification(user).then(() => {
+            onPress={() =>
+              sendEmailVerification(user).then(() =>
                 setMessage(
                   "Email Enviado, entre novamente quando verificar Email"
-                );
-                setTimeout(() => {
-                  auth.signOut();
-                }, 5000);
-              });
-            }}
+                )
+              )
+            }
           >
             <Text
               style={{

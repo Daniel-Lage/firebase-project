@@ -1,10 +1,4 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useReducer, useRef, useState } from "react";
 
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
@@ -23,25 +17,16 @@ export default function SignIn({ navigation }) {
   function signIn() {
     if (isEmail(email) && isLength(password, 6)) {
       signInWithEmailAndPassword(auth, email, password).catch(() => {
-        setTimeout(() => {
-          setError("None");
-        }, 2000);
+        setTimeout(() => setError("None"), 2000);
         setError("Email ou Senha incorretos");
       });
       return;
     }
-    setTimeout(() => {
-      setError("None");
-    }, 2000);
+    setTimeout(() => setError("None"), 2000);
     setError("Email ou Senha incorretos");
   }
 
-  window.onkeydown = (e) => {
-    if (e.keyCode === 13) {
-      e.preventDefault();
-      signIn();
-    }
-  };
+  window.onkeydown = (e) => e.keyCode === 13 && signIn();
 
   return (
     <>
@@ -70,9 +55,9 @@ export default function SignIn({ navigation }) {
           ]}
           value={email}
           onChangeText={setEmail}
-          onKeyPress={(e) => {
-            if (e.keyCode === 13) passwordTextInput.current.focus();
-          }}
+          onKeyPress={(e) =>
+            e.keyCode === 13 && passwordTextInput.current.focus()
+          }
           placeholder="Email"
         />
         <TextInput
@@ -85,9 +70,7 @@ export default function SignIn({ navigation }) {
             },
           ]}
           ref={passwordTextInput}
-          onKeyPress={(e) => {
-            if (e.keyCode === 13) signIn();
-          }}
+          onKeyPress={(e) => e.keyCode === 13 && signIn()}
           value={password}
           onChangeText={setPassword}
           placeholder="Senha"
@@ -123,11 +106,7 @@ export default function SignIn({ navigation }) {
             <Text>Entrar</Text>
           </Pressable>
         </View>
-        <Pressable
-          onPress={() => {
-            navigation.navigate("PasswordRecovery");
-          }}
-        >
+        <Pressable onPress={() => navigation.navigate("PasswordRecovery")}>
           <Text style={{ color: "rgb(104, 171, 242)" }}>
             Esqueci Minha Senha
           </Text>

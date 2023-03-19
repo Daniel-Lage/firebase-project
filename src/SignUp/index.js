@@ -22,28 +22,19 @@ export default function SignUp({ navigation }) {
     if (!isLength(password, 6)) mistakes.push("Senha abaixo de 6 caracteres");
 
     if (mistakes.length) {
-      setTimeout(() => {
-        setError("None");
-      }, 2000);
+      setTimeout(() => setError("None"), 2000);
       return setError(mistakes.join(", "));
     }
 
     createUserWithEmailAndPassword(auth, email, password).catch((error) => {
       if (error.message === "Firebase: Error (auth/email-already-in-use).") {
-        setTimeout(() => {
-          setError("None");
-        }, 2000);
+        setTimeout(() => setError("None"), 2000);
         setError("Email already in use");
       }
     });
   }
 
-  window.onkeydown = (e) => {
-    if (e.keyCode === 13) {
-      e.preventDefault();
-      signUp();
-    }
-  };
+  window.onkeydown = (e) => e.keyCode === 13 && signUp();
 
   return (
     <>
@@ -72,9 +63,9 @@ export default function SignUp({ navigation }) {
           ]}
           value={email}
           onChangeText={setEmail}
-          onKeyPress={(e) => {
-            if (e.keyCode === 13) passwordTextInput.current.focus();
-          }}
+          onKeyPress={(e) =>
+            e.keyCode === 13 && passwordTextInput.current.focus()
+          }
           placeholder="Email"
         />
         <TextInput
@@ -87,9 +78,7 @@ export default function SignUp({ navigation }) {
             },
           ]}
           ref={passwordTextInput}
-          onKeyPress={(e) => {
-            if (e.keyCode === 13) signUp();
-          }}
+          onKeyPress={(e) => e.keyCode === 13 && signUp()}
           value={password}
           onChangeText={setPassword}
           placeholder="Senha"
