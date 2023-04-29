@@ -1,14 +1,15 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import { useState } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useState } from "react";
 
-import SignIn from "./src/SignIn";
-import Home from "./src/Home";
-import SignUp from "./src/SignUp";
-import PasswordRecovery from "./src/PasswordRecovery";
+import Feed from "./src/pages/feed";
+import PasswordRecovery from "./src/pages/passwordRecovery";
+import Profile from "./src/pages/profile";
+import SignIn from "./src/pages/signIn";
+import SignUp from "./src/pages/signUp";
 
 const app = initializeApp({
   apiKey: "AIzaSyD5JYpWfsxBlQnZZAfJy9LxUkKQAH1zsjQ",
@@ -31,10 +32,15 @@ export default function App() {
 
   return user ? (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Feed">
         <Stack.Screen
-          name="Home"
-          component={Home}
+          name="Feed"
+          component={Feed}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Profile"
+          component={Profile}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
