@@ -66,6 +66,14 @@ export default function PasswordRecovery({ navigation }) {
           ]}
           ref={emailTextInput}
           placeholder="Email"
+          onKeyPress={(e) => {
+            switch (e.code) {
+              case "Enter":
+              case "NumpadEnter":
+                recover();
+                break;
+            }
+          }}
         />
 
         <View style={{ flexDirection: "row" }}>

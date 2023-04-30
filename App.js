@@ -10,6 +10,7 @@ import PasswordRecovery from "./src/pages/passwordRecovery";
 import Profile from "./src/pages/profile";
 import SignIn from "./src/pages/signIn";
 import SignUp from "./src/pages/signUp";
+import SetUp from "./src/pages/setUp";
 
 const app = initializeApp({
   apiKey: "AIzaSyD5JYpWfsxBlQnZZAfJy9LxUkKQAH1zsjQ",
@@ -31,20 +32,24 @@ export default function App() {
   });
 
   return user ? (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Feed">
-        <Stack.Screen
-          name="Feed"
-          component={Feed}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Profile"
-          component={Profile}
-          options={{ headerShown: false }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    user.displayName && user.photoURL ? (
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Feed">
+          <Stack.Screen
+            name="Feed"
+            component={Feed}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Profile"
+            component={Profile}
+            options={{ headerShown: false }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    ) : (
+      <SetUp />
+    )
   ) : (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="SignIn">

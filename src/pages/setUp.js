@@ -8,18 +8,15 @@ import { AntDesign } from "@expo/vector-icons";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import { colors } from "../styles/colors";
 import { styles } from "../styles/profile";
-import { collectionPost } from "../functions/dbApi";
 
-export default function Profile({ navigation }) {
+export default function SetUp({ navigation }) {
   const auth = getAuth();
   const storage = getStorage();
 
   const [updated, setUpdated] = useState(false);
   const [renaming, setRenaming] = useState(false);
 
-  const [message, setMessage] = useState(
-    auth.currentUser.emailVerified ? "None" : "Email não verificado"
-  );
+  const [error, setError] = useState("None");
 
   const nameInputRef = useRef();
 
@@ -36,11 +33,6 @@ export default function Profile({ navigation }) {
           const images = ref(storage, auth.currentUser.uid);
           uploadBytes(images, image).then((snapshot) => {
             getDownloadURL(snapshot.ref).then((photoURL) => {
-              collectionPost("users", auth.currentUser.uid, {
-                icon: photoURL,
-                name: auth.currentUser.displayName,
-              });
-
               updateProfile(auth.currentUser, {
                 photoURL,
               }).then(() => {
@@ -53,10 +45,6 @@ export default function Profile({ navigation }) {
   }
 
   function configurarNome() {
-    collectionPost("users", auth.currentUser.uid, {
-      icon: auth.currentUser.photoURL,
-      name: nameInputRef.current.value,
-    });
     updateProfile(auth.currentUser, {
       displayName: nameInputRef.current.value,
     }).then(() => {
@@ -133,34 +121,44 @@ export default function Profile({ navigation }) {
             </Pressable>
           </View>
         )}
-        {message === "None" || (
-          <Pressable
-            onPress={() =>
-              sendEmailVerification(auth.currentUser).then(() =>
-                setMessage(
-                  "Email Enviado, entre novamente quando verificar Email"
-                )
-              )
-            }
-          >
-            <Text
-              style={{
-                color:
-                  message === "Email não verificado"
-                    ? colors.error
-                    : colors.primary,
-                userSelect: "none",
-                fontWeight: "600",
-              }}
-            >
-              {message}
-            </Text>
-          </Pressable>
-        )}
 
-        <Pressable onPress={() => auth.signOut()} style={styles.exitButton}>
-          <Text>Sair</Text>
+        <Pressable
+          onPress={() => {
+            const mistakes = [];
+
+            if (!auth.currentUser.displayName) mistakes.push("Sem Nome");
+            if (!auth.currentUser.photoURL) mistakes.push("Sem Icone");
+
+            if (mistakes.length) {
+              setTimeout(() => setError("None"), 2000);
+              return setError(mistakes.join(", "));
+            }
+            const user = auth.currentUser;
+            const userObject = {
+              uid: user.uid,
+              icon: user.photoURL,
+              name: user.displayName,
+            };
+            collectionPost("users", user.uid, userObject);
+
+            auth.signOut();
+          }}
+          style={styles.submitButton}
+        >
+          <Text>Salvar e Sair</Text>
         </Pressable>
+
+        {error === "None" || (
+          <Text
+            style={{
+              color: colors.error,
+              userSelect: "none",
+              fontWeight: "600",
+            }}
+          >
+            {error}
+          </Text>
+        )}
       </View>
     </>
   );

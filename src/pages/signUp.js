@@ -42,14 +42,16 @@ export default function SignUp({ navigation }) {
     });
   }
 
-  window.onkeydown = (e) => {
+  function handleKeyPress(e) {
     switch (e.code) {
       case "Enter":
       case "NumpadEnter":
         signUp();
         break;
     }
-  };
+  }
+
+  window.onkeydown = handleKeyPress;
 
   return (
     <>
@@ -75,6 +77,7 @@ export default function SignUp({ navigation }) {
           ]}
           ref={emailTextInput}
           placeholder="Email"
+          onKeyPress={handleKeyPress}
         />
         <TextInput
           secureTextEntry={true}
@@ -86,6 +89,7 @@ export default function SignUp({ navigation }) {
           ]}
           ref={passwordTextInput}
           placeholder="Senha"
+          onKeyPress={handleKeyPress}
         />
         <View style={{ flexDirection: "row" }}>
           <Pressable

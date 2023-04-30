@@ -2,28 +2,59 @@ import { Image, Pressable, Text, TextInput, View } from "react-native";
 
 import { getAuth } from "firebase/auth";
 
+import { Feather } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import { styles } from "../styles/feed";
-import { getPosts, postPost } from "../functions/postsApi";
-import { Timestamp } from "firebase/firestore";
+import {
+  collectionDelete,
+  collectionGet,
+  collectionPost,
+} from "../functions/dbApi";
 
-export default function Feed({ navigation }) {
+const usersObject = {};
+
+export default function Feed({ navigation, route }) {
   const auth = getAuth();
   const postTextInput = useRef();
-  const [posts, setPosts] = useState(null);
+  const [posts, setPosts] = useState([]);
+
+  async function sendPost() {
+    const writer = auth.currentUser.uid;
+    const time = new Date().getTime();
+    const postTitle = writer + time;
+    const post = {
+      text: postTextInput.current.value,
+      time,
+      writer,
+    };
+
+    postTextInput.current.value = "";
+
+    collectionPost("posts", postTitle, post).then(() => {
+      loadPosts();
+    });
+  }
 
   function loadPosts() {
-    getPosts().then((posts) => {
-      setPosts(posts);
+    collectionGet("posts").then((posts) => {
+      setPosts(
+        posts.map(({ id, text, time, writer }) => ({
+          id,
+          text,
+          time,
+          writer: usersObject[writer],
+        }))
+      );
     });
   }
 
   useEffect(() => {
-    loadPosts();
-  }, []);
-
-  console.log(posts);
+    collectionGet("users").then((users) => {
+      users.forEach((value) => (usersObject[value.id] = value));
+      loadPosts();
+    });
+  }, [route]);
 
   return (
     <>
@@ -38,7 +69,7 @@ export default function Feed({ navigation }) {
             navigation.navigate("Profile");
           }}
         >
-          <AntDesign name="user" size={24} color="black" />
+          <Feather name="user" size={24} color="black" />
         </Pressable>
         <Text style={{ fontWeight: "bold", userSelect: "none" }}>
           Página Inicial
@@ -55,31 +86,24 @@ export default function Feed({ navigation }) {
             style={styles.textField}
             ref={postTextInput}
             placeholder="Escreva seu Post"
-          />
-          <Pressable
-            onPress={() => {
-              const writer = auth.currentUser;
-              const now = new Date();
-              const postId = writer.uid + now.getTime();
-              const post = {
-                icon: writer.photoURL,
-                text: postTextInput.current.value,
-                time: now,
-                uid: writer.uid,
-                writer: writer.displayName,
-              };
-
-              postPost(postId, post).then(() => {
-                loadPosts();
-              });
+            onKeyPress={(e) => {
+              switch (e.code) {
+                case "Enter":
+                case "NumpadEnter":
+                  sendPost();
+                  break;
+              }
             }}
-            style={styles.mainButton}
-          >
-            <Text>Enviar</Text>
+          />
+          <Pressable onPress={sendPost} style={styles.sendButton}>
+            <Feather name="send" size={24} color="black" />
+          </Pressable>
+          <Pressable onPress={loadPosts} style={styles.sendButton}>
+            <AntDesign name="reload1" size={24} color="black" />
           </Pressable>
         </View>
-        {posts?.map((post) => {
-          const since = new Date().getTime() - post.time.toDate().getTime();
+        {posts.map((post) => {
+          const since = new Date().getTime() - post.time;
 
           var time;
 
@@ -99,13 +123,27 @@ export default function Feed({ navigation }) {
             time =
               measure.amount + measure.name + (measure.amount > 1 ? "s" : "");
           }
-
           return (
             <View key={post.id} style={styles.post}>
-              <Image style={styles.image} source={post.icon} />
-              <Text>{post.writer}</Text>
-              <Text>{post.text}</Text>
+              <Image style={styles.image} source={post.writer.icon} />
+              <Text style={{ fontWeight: "bold" }}>{post.writer.name}</Text>
+              <Text style={{ flex: 1 }}>{post.text}</Text>
               <Text>{time}</Text>
+              {post.writer.uid === auth.currentUser.uid && (
+                <Pressable
+                  onPress={() => {
+                    console.log;
+                    collectionDelete("posts", post.writer.uid + post.time).then(
+                      () => {
+                        loadPosts();
+                      }
+                    );
+                  }}
+                  style={styles.deleteButton}
+                >
+                  <Feather name="trash-2" size={24} color="black" />
+                </Pressable>
+              )}
             </View>
           );
         })}

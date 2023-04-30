@@ -25,6 +25,15 @@ export const styles = StyleSheet.create({
     borderColor: colors.dark,
     backgroundColor: colors.backgroundDarker,
   },
+  button: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    backgroundColor: colors.primary,
+  },
   nameDisplay: {
     width: 144,
     height: 40,
@@ -40,11 +49,20 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  mainButton: {
+  exitButton: {
     width: 72,
     height: 40,
     justifyContent: "center",
     backgroundColor: colors.error,
+    textAlign: "center",
+    borderRadius: 5,
+    userSelect: "none",
+  },
+  submitButton: {
+    width: 72,
+    height: 40,
+    justifyContent: "center",
+    backgroundColor: colors.primary,
     textAlign: "center",
     borderRadius: 5,
     userSelect: "none",
