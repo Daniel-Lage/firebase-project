@@ -6,6 +6,7 @@ import {
   setDoc,
   doc,
   deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 export async function collectionGet(path) {
@@ -30,4 +31,8 @@ export async function collectionPost(path, title, object) {
 
 export async function collectionDelete(path, title) {
   await deleteDoc(doc(getFirestore(), path, title));
+}
+
+export async function collectionUpdate(path, title, changes) {
+  await updateDoc(doc(getFirestore(), path, title), changes);
 }

@@ -8,7 +8,7 @@ import { AntDesign } from "@expo/vector-icons";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import { colors } from "../styles/colors";
 import { styles } from "../styles/profile";
-import { collectionPost } from "../functions/dbApi";
+import { collectionPost, collectionUpdate } from "../functions/dbApi";
 
 export default function Profile({ navigation }) {
   const auth = getAuth();
@@ -36,9 +36,8 @@ export default function Profile({ navigation }) {
           const images = ref(storage, auth.currentUser.uid);
           uploadBytes(images, image).then((snapshot) => {
             getDownloadURL(snapshot.ref).then((photoURL) => {
-              collectionPost("users", auth.currentUser.uid, {
+              collectionUpdate("users", auth.currentUser.uid, {
                 icon: photoURL,
-                name: auth.currentUser.displayName,
               });
 
               updateProfile(auth.currentUser, {
@@ -53,8 +52,7 @@ export default function Profile({ navigation }) {
   }
 
   function configurarNome() {
-    collectionPost("users", auth.currentUser.uid, {
-      icon: auth.currentUser.photoURL,
+    collectionUpdate("users", auth.currentUser.uid, {
       name: nameInputRef.current.value,
     });
     updateProfile(auth.currentUser, {

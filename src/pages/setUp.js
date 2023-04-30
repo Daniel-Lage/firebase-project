@@ -8,6 +8,7 @@ import { AntDesign } from "@expo/vector-icons";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import { colors } from "../styles/colors";
 import { styles } from "../styles/profile";
+import { collectionPost } from "../functions/dbApi";
 
 export default function SetUp({ navigation }) {
   const auth = getAuth();

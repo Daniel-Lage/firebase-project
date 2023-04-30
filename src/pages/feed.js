@@ -103,26 +103,38 @@ export default function Feed({ navigation, route }) {
           </Pressable>
         </View>
         {posts.map((post) => {
-          const since = new Date().getTime() - post.time;
+          const since = Date.now() - post.time;
 
           var time;
+          const limits = [1000, 60000, 3600000, 86400000];
+          const measures = ["segundo", "minuto", "hora"];
+          const index = limits.findIndex((value) => since < value);
 
-          if (since < 1000) {
-            time = "Now";
-          } else {
-            var measure;
-            if (since < 60000) {
-              measure = { amount: Math.floor(since / 1000), name: " Segundo" };
-            } else if (since < 360000) {
-              measure = { amount: Math.floor(since / 60000), name: " Minuto" };
-            } else if (since < 86400000) {
-              measure = { amount: Math.floor(since / 360000), name: " Hora" };
-            } else {
-              measure = { amount: Math.floor(since / 86400000), name: " Dia" };
-            }
-            time =
-              measure.amount + measure.name + (measure.amount > 1 ? "s" : "");
+          switch (index) {
+            case -1:
+              const currDate = new Date();
+              const postDate = new Date(post.time);
+              if (currDate.getFullYear() === postDate.getFullYear())
+                time = [postDate.getDate(), postDate.getMonth() + 1].join("/");
+              else
+                time = [
+                  postDate.getDate(),
+                  postDate.getMonth() + 1,
+                  postDate.getFullYear(),
+                ].join("/");
+              break;
+            case 0:
+              time = "agora";
+              break;
+            default:
+              const amount = Math.floor(since / limits[index - 1]);
+              const name = measures[index - 1];
+              time = [amount, name + (amount > 1 ? "s" : ""), "atrás"].join(
+                " "
+              );
+              break;
           }
+
           return (
             <View key={post.id} style={styles.post}>
               <Image style={styles.image} source={post.writer.icon} />
@@ -133,11 +145,9 @@ export default function Feed({ navigation, route }) {
                 <Pressable
                   onPress={() => {
                     console.log;
-                    collectionDelete("posts", post.writer.uid + post.time).then(
-                      () => {
-                        loadPosts();
-                      }
-                    );
+                    collectionDelete("posts", post.id).then(() => {
+                      loadPosts();
+                    });
                   }}
                   style={styles.deleteButton}
                 >
