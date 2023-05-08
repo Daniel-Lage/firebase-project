@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Pressable, Text, TextInput } from "react-native";
 
-import { createUserWithEmailAndPassword, getAuth } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  updateProfile,
+} from "firebase/auth";
 
 import { isEmail, isLength } from "validator";
 
@@ -10,6 +14,7 @@ import { colors } from "../styles/colors";
 import Header from "../components/header";
 import Container from "../components/container";
 import Menu from "../components/menu";
+import { insert } from "../functions/dbApi";
 
 export default function SignUp({ navigation }) {
   const auth = getAuth();
@@ -20,16 +25,14 @@ export default function SignUp({ navigation }) {
   const [password, setPassword] = useState("");
 
   function signUp() {
-    var email = emailTextInput.current.value;
-    const password = passwordTextInput.current.value;
-
+    let emailVal = email;
     const mistakes = [];
 
     if (!isLength(password, 6)) mistakes.push("Senha abaixo de 6 caracteres");
 
-    if (!isEmail(email)) {
-      email += "@gmail.com";
-      if (!isEmail(email)) mistakes.push("Email Invalido");
+    if (!isEmail(emailVal)) {
+      emailVal += "@gmail.com";
+      if (!isEmail(emailVal)) mistakes.push("Email Invalido");
     }
 
     if (mistakes.length) {
@@ -37,19 +40,40 @@ export default function SignUp({ navigation }) {
       return setError(mistakes.join(", "));
     }
 
-    createUserWithEmailAndPassword(auth, email, password).catch((error) => {
-      if (error.message === "Firebase: Error (auth/email-already-in-use).") {
-        setTimeout(() => setError("None"), 2000);
-        setError("Email already in use");
-      }
-    });
+    createUserWithEmailAndPassword(auth, emailVal, password)
+      .then(() => {
+        const newDisplayName = auth.currentUser.email.slice(
+          0,
+          auth.currentUser.email.indexOf("@")
+        );
+
+        updateProfile(auth.currentUser, {
+          displayName: newDisplayName,
+          photoURL:
+            "https://firebasestorage.googleapis.com/v0/b/fir-login-9a729.appspot.com/o/dXJT53tYuCTt3NuiR4DgP8zLrpG2?alt=media&token=a4145c21-ad55-472b-9021-677052dad812",
+        });
+
+        insert("users", auth.currentUser.uid, {
+          uid: auth.currentUser.uid,
+          followers: [],
+          following: [],
+          name: newDisplayName,
+          icon: "https://firebasestorage.googleapis.com/v0/b/fir-login-9a729.appspot.com/o/dXJT53tYuCTt3NuiR4DgP8zLrpG2?alt=media&token=a4145c21-ad55-472b-9021-677052dad812",
+        });
+      })
+      .catch((error) => {
+        if (error.message === "Firebase: Error (auth/email-already-in-use).") {
+          setTimeout(() => setError("None"), 2000);
+          setError("Email already in use");
+        }
+      });
   }
 
   function handleKeyPress(e) {
     switch (e.code) {
       case "Enter":
       case "NumpadEnter":
-        signIn();
+        signUp();
         break;
     }
   }
