@@ -4,11 +4,14 @@ import { Image, Pressable, Text, TextInput, View } from "react-native";
 import { getAuth, sendEmailVerification, updateProfile } from "firebase/auth";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 
-import { AntDesign } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import { colors } from "../styles/colors";
 import { styles } from "../styles/profile";
-import { collectionPost, collectionUpdate } from "../functions/dbApi";
+import { update } from "../functions/dbApi";
+import Header from "../components/header";
+import Container from "../components/container";
+import Menu from "../components/menu";
 
 export default function Profile({ navigation }) {
   const auth = getAuth();
@@ -36,7 +39,7 @@ export default function Profile({ navigation }) {
           const images = ref(storage, auth.currentUser.uid);
           uploadBytes(images, image).then((snapshot) => {
             getDownloadURL(snapshot.ref).then((photoURL) => {
-              collectionUpdate("users", auth.currentUser.uid, {
+              update("users", auth.currentUser.uid, {
                 icon: photoURL,
               });
 
@@ -52,7 +55,7 @@ export default function Profile({ navigation }) {
   }
 
   function configurarNome() {
-    collectionUpdate("users", auth.currentUser.uid, {
+    update("users", auth.currentUser.uid, {
       name: nameInputRef.current.value,
     });
     updateProfile(auth.currentUser, {
@@ -65,101 +68,91 @@ export default function Profile({ navigation }) {
 
   return (
     <>
-      <View style={styles.header}>
-        <Pressable
-          style={{
-            position: "absolute",
-            alignSelf: "flex-start",
-            marginLeft: 10,
-          }}
-          onPress={() => {
-            setUpdated(false);
-            navigation.navigate("Feed", { updated });
-          }}
-        >
-          <AntDesign name="home" size={24} color="black" />
-        </Pressable>
-        <Text style={{ fontWeight: "bold", userSelect: "none" }}>
-          Seu Perfil
-        </Text>
-      </View>
-      <View style={styles.container}>
-        {auth.currentUser.photoURL ? (
-          <View style={{ justifyContent: "flex-end" }}>
-            <Image style={styles.image} source={auth.currentUser.photoURL} />
+      <Header
+        title="Seu Perfil"
+        lSymbol="home"
+        lOnPress={() => {
+          setUpdated(false);
+          navigation.navigate("Feed", { updated });
+        }}
+        rSymbol="log-out"
+        rOnPress={() => auth.signOut()}
+      />
+      <Container>
+        <Menu>
+          {auth.currentUser.photoURL ? (
+            <View style={{ justifyContent: "flex-end" }}>
+              <Image style={styles.image} source={auth.currentUser.photoURL} />
+              <Pressable
+                style={{ position: "absolute", alignSelf: "flex-end" }}
+                onPress={configurarImagem}
+              >
+                <Feather name="edit-3" size={24} color={colors.dark} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable style={styles.image} onPress={configurarImagem}>
+              <Feather name="plus" size={100} color="rgb(172, 172, 172)" />
+            </Pressable>
+          )}
+          {renaming ? (
+            <View style={{ flexDirection: "row" }}>
+              <TextInput
+                placeholder="Nome"
+                style={styles.textField}
+                ref={nameInputRef}
+                onKeyPress={(e) => {
+                  switch (e.code) {
+                    case "Enter":
+                    case "NumpadEnter":
+                      configurarNome();
+                      break;
+                  }
+                }}
+              />
+              <Pressable style={styles.button} onPress={configurarNome}>
+                <Feather name="edit-3" size={24} color={colors.dark} />
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.nameDisplay}>
+              <Text style={{ fontWeight: "bold", marginHorizontal: 24 }}>
+                {auth.currentUser.displayName}
+              </Text>
+              <Pressable
+                style={{ position: "absolute", alignSelf: "flex-end" }}
+                onPress={() => setRenaming(true)}
+              >
+                <Feather name="edit-3" size={24} color={colors.dark} />
+              </Pressable>
+            </View>
+          )}
+          {message === "None" || (
             <Pressable
-              style={{ position: "absolute", alignSelf: "flex-end" }}
-              onPress={configurarImagem}
-            >
-              <AntDesign name="edit" size={24} color="black" />
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable style={styles.image} onPress={configurarImagem}>
-            <AntDesign name="plus" size={100} color="rgb(172, 172, 172)" />
-          </Pressable>
-        )}
-        {renaming ? (
-          <View style={{ flexDirection: "row" }}>
-            <TextInput
-              placeholder="Nome"
-              style={styles.textField}
-              ref={nameInputRef}
-              onKeyPress={(e) => {
-                switch (e.code) {
-                  case "Enter":
-                  case "NumpadEnter":
-                    configurarNome();
-                    break;
-                }
-              }}
-            />
-            <Pressable style={styles.button} onPress={configurarNome}>
-              <AntDesign name="check" size={24} color="black" />
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.nameDisplay}>
-            <Text style={{ fontWeight: "bold", marginHorizontal: 24 }}>
-              {auth.currentUser.displayName}
-            </Text>
-            <Pressable
-              style={{ position: "absolute", alignSelf: "flex-end" }}
-              onPress={() => setRenaming(true)}
-            >
-              <AntDesign name="edit" size={24} color="black" />
-            </Pressable>
-          </View>
-        )}
-        {message === "None" || (
-          <Pressable
-            onPress={() =>
-              sendEmailVerification(auth.currentUser).then(() =>
-                setMessage(
-                  "Email Enviado, entre novamente quando verificar Email"
+              onPress={() =>
+                sendEmailVerification(auth.currentUser).then(() =>
+                  setMessage(
+                    "Email Enviado, entre novamente quando verificar Email"
+                  )
                 )
-              )
-            }
-          >
-            <Text
-              style={{
-                color:
-                  message === "Email não verificado"
-                    ? colors.error
-                    : colors.primary,
-                userSelect: "none",
-                fontWeight: "600",
-              }}
+              }
             >
-              {message}
-            </Text>
-          </Pressable>
-        )}
-
-        <Pressable onPress={() => auth.signOut()} style={styles.exitButton}>
-          <Text>Sair</Text>
-        </Pressable>
-      </View>
+              <Text
+                style={{
+                  color:
+                    message === "Email não verificado"
+                      ? colors.error
+                      : colors.primary,
+                  userSelect: "none",
+                  fontWeight: "600",
+                }}
+              >
+                {message}
+              </Text>
+            </Pressable>
+          )}
+        </Menu>
+      </Container>
     </>
   );
 }

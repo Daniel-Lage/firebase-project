@@ -5,6 +5,7 @@ export const styles = StyleSheet.create({
   header: {
     width: "100%",
     backgroundColor: colors.primary,
+    color: colors.dark,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 10,
@@ -15,6 +16,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
+    color: colors.dark,
   },
   textField: {
     width: 140,
@@ -50,16 +52,16 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     shadowRadius: 10,
     shadowOpacity: 0.1,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: colors.dark,
   },
   exitButton: {
-    width: 72,
+    width: 40,
     height: 40,
     justifyContent: "center",
     backgroundColor: colors.error,
     textAlign: "center",
-    borderRadius: 5,
+    borderRadius: 20,
     userSelect: "none",
   },
   submitButton: {

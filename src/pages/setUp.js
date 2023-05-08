@@ -8,7 +8,7 @@ import { AntDesign } from "@expo/vector-icons";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import { colors } from "../styles/colors";
 import { styles } from "../styles/profile";
-import { collectionPost } from "../functions/dbApi";
+import { insert } from "../functions/dbApi";
 
 export default function SetUp({ navigation }) {
   const auth = getAuth();
@@ -68,7 +68,7 @@ export default function SetUp({ navigation }) {
             navigation.navigate("Feed", { updated });
           }}
         >
-          <AntDesign name="home" size={24} color="black" />
+          <AntDesign name="home" size={24} color={colors.dark} />
         </Pressable>
         <Text style={{ fontWeight: "bold", userSelect: "none" }}>
           Seu Perfil
@@ -82,7 +82,7 @@ export default function SetUp({ navigation }) {
               style={{ position: "absolute", alignSelf: "flex-end" }}
               onPress={configurarImagem}
             >
-              <AntDesign name="edit" size={24} color="black" />
+              <AntDesign name="edit" size={24} color={colors.dark} />
             </Pressable>
           </View>
         ) : (
@@ -90,7 +90,7 @@ export default function SetUp({ navigation }) {
             <AntDesign name="plus" size={100} color="rgb(172, 172, 172)" />
           </Pressable>
         )}
-        {renaming ? (
+        {renaming === false ? (
           <View style={{ flexDirection: "row" }}>
             <TextInput
               placeholder="Nome"
@@ -106,7 +106,7 @@ export default function SetUp({ navigation }) {
               }}
             />
             <Pressable style={styles.button} onPress={configurarNome}>
-              <AntDesign name="check" size={24} color="black" />
+              <AntDesign name="check" size={24} color={colors.dark} />
             </Pressable>
           </View>
         ) : (
@@ -118,7 +118,7 @@ export default function SetUp({ navigation }) {
               style={{ position: "absolute", alignSelf: "flex-end" }}
               onPress={() => setRenaming(true)}
             >
-              <AntDesign name="edit" size={24} color="black" />
+              <AntDesign name="edit" size={24} color={colors.dark} />
             </Pressable>
           </View>
         )}
@@ -140,7 +140,7 @@ export default function SetUp({ navigation }) {
               icon: user.photoURL,
               name: user.displayName,
             };
-            collectionPost("users", user.uid, userObject);
+            insert("users", user.uid, userObject);
 
             auth.signOut();
           }}

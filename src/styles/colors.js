@@ -4,7 +4,7 @@ export const colors = {
   backgroundDarker: "rgb(190, 195, 190)",
   toPost: "rgb(150, 150, 150)",
   post: "rgb(180, 195, 180)",
-  dark: "rgb(40, 40, 40)",
-  link: "rgb(0, 160, 255)",
+  dark: "rgb(40, 55, 40)",
+  link: "rgb(0, 70, 255)",
   error: "rgb(230, 70, 70)",
 };

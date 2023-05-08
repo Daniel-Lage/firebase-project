@@ -9,7 +9,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-export async function collectionGet(path) {
+export async function read(path) {
   const collectionRef = collection(getFirestore(), path);
   const q = query(collectionRef);
 
@@ -24,15 +24,14 @@ export async function collectionGet(path) {
   return array;
 }
 
-export async function collectionPost(path, title, object) {
-  const db = getFirestore();
+export async function insert(path, title, object) {
   await setDoc(doc(getFirestore(), path, title), object);
 }
 
-export async function collectionDelete(path, title) {
+export async function remove(path, title) {
   await deleteDoc(doc(getFirestore(), path, title));
 }
 
-export async function collectionUpdate(path, title, changes) {
+export async function update(path, title, changes) {
   await updateDoc(doc(getFirestore(), path, title), changes);
 }

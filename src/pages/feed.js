@@ -2,42 +2,42 @@ import { Image, Pressable, Text, TextInput, View } from "react-native";
 
 import { getAuth } from "firebase/auth";
 
-import { Feather } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
-import { styles } from "../styles/feed";
-import {
-  collectionDelete,
-  collectionGet,
-  collectionPost,
-} from "../functions/dbApi";
+import { Feather } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import { colors } from "../styles/colors";
+import { insert, read } from "../functions/dbApi";
+import formatTime from "../functions/formatTime";
+import Header from "../components/header";
+import Container from "../components/container";
 
 const usersObject = {};
 
 export default function Feed({ navigation, route }) {
   const auth = getAuth();
-  const postTextInput = useRef();
+
+  const [postText, setPostText] = useState("");
   const [posts, setPosts] = useState([]);
 
   async function sendPost() {
+    if (postText.length > 180) return;
     const writer = auth.currentUser.uid;
     const time = new Date().getTime();
     const postTitle = writer + time;
     const post = {
-      text: postTextInput.current.value,
+      text: postText,
       time,
       writer,
     };
 
-    postTextInput.current.value = "";
-
-    collectionPost("posts", postTitle, post).then(() => {
+    setPostText("");
+    insert("posts", postTitle, post).then(() => {
       loadPosts();
     });
   }
 
   function loadPosts() {
-    collectionGet("posts").then((posts) => {
+    read("posts").then((posts) => {
       setPosts(
         posts.map(({ id, text, time, writer }) => ({
           id,
@@ -50,7 +50,7 @@ export default function Feed({ navigation, route }) {
   }
 
   useEffect(() => {
-    collectionGet("users").then((users) => {
+    read("users").then((users) => {
       users.forEach((value) => (usersObject[value.id] = value));
       loadPosts();
     });
@@ -58,33 +58,46 @@ export default function Feed({ navigation, route }) {
 
   return (
     <>
-      <View style={styles.header}>
-        <Pressable
+      <Header
+        title="Página Inicial"
+        lSymbol="user"
+        lOnPress={() => {
+          navigation.navigate("Profile");
+        }}
+      >
+        <View
           style={{
-            position: "absolute",
-            alignSelf: "flex-start",
-            marginLeft: 10,
-          }}
-          onPress={() => {
-            navigation.navigate("Profile");
+            width: "100%",
+            flexDirection: "row",
+            gap: 10,
+            backgroundColor: colors.primary,
+            alignItems: "center",
+            padding: 10,
           }}
         >
-          <Feather name="user" size={24} color="black" />
-        </Pressable>
-        <Text style={{ fontWeight: "bold", userSelect: "none" }}>
-          Página Inicial
-        </Text>
-      </View>
-      <View style={styles.container}>
-        <View style={styles.toPost}>
           <Image
-            style={styles.image}
+            style={{
+              height: 50,
+              aspectRatio: 1,
+              borderRadius: "50%",
+              borderWidth: 2,
+              borderColor: colors.dark,
+            }}
             onError={() => setPhotoURL(null)}
             source={auth.currentUser.photoURL}
           />
           <TextInput
-            style={styles.textField}
-            ref={postTextInput}
+            style={{
+              flex: 1,
+              height: 30,
+              paddingLeft: 10,
+              borderRadius: 20,
+              borderWidth: 2,
+              borderColor: colors.dark,
+              backgroundColor: colors.backgroundDarker,
+            }}
+            value={postText}
+            onChangeText={setPostText}
             placeholder="Escreva seu Post"
             onKeyPress={(e) => {
               switch (e.code) {
@@ -95,69 +108,122 @@ export default function Feed({ navigation, route }) {
               }
             }}
           />
-          <Pressable onPress={sendPost} style={styles.sendButton}>
-            <Feather name="send" size={24} color="black" />
+          {postText.length > 180 ? (
+            <View
+              style={{
+                height: 50,
+                aspectRatio: 1,
+                borderRadius: "50%",
+                backgroundColor: colors.error,
+                borderWidth: 2,
+                borderColor: colors.dark,
+              }}
+            ></View>
+          ) : (
+            <View
+              style={{
+                height: 50,
+                aspectRatio: 1,
+                borderRadius: "50%",
+                backgroundImage: `conic-gradient(${colors.background} ${
+                  postText.length / 1.8
+                }%, transparent ${postText.length / 1.8}%)`,
+                borderWidth: 2,
+                borderColor: colors.dark,
+              }}
+            ></View>
+          )}
+
+          <Pressable
+            onPress={sendPost}
+            style={{
+              height: 50,
+              aspectRatio: 1,
+              borderRadius: "50%",
+              justifyContent: "center",
+              backgroundColor: colors.primary,
+              textAlign: "center",
+              userSelect: "none",
+              borderWidth: 2,
+              borderColor: colors.dark,
+            }}
+          >
+            <Feather name="send" size={24} color={colors.dark} x />
           </Pressable>
-          <Pressable onPress={loadPosts} style={styles.sendButton}>
-            <AntDesign name="reload1" size={24} color="black" />
+          <Pressable
+            onPress={loadPosts}
+            style={{
+              height: 50,
+              aspectRatio: 1,
+              borderRadius: "50%",
+              justifyContent: "center",
+              backgroundColor: colors.primary,
+              textAlign: "center",
+              userSelect: "none",
+              borderWidth: 2,
+              borderColor: colors.dark,
+            }}
+          >
+            <AntDesign name="reload1" size={24} color={colors.dark} />
           </Pressable>
         </View>
-        {posts.map((post) => {
-          const since = Date.now() - post.time;
-
-          var time;
-          const limits = [1000, 60000, 3600000, 86400000];
-          const measures = ["segundo", "minuto", "hora"];
-          const index = limits.findIndex((value) => since < value);
-
-          switch (index) {
-            case -1:
-              const currDate = new Date();
-              const postDate = new Date(post.time);
-              if (currDate.getFullYear() === postDate.getFullYear())
-                time = [postDate.getDate(), postDate.getMonth() + 1].join("/");
-              else
-                time = [
-                  postDate.getDate(),
-                  postDate.getMonth() + 1,
-                  postDate.getFullYear(),
-                ].join("/");
-              break;
-            case 0:
-              time = "agora";
-              break;
-            default:
-              const amount = Math.floor(since / limits[index - 1]);
-              const name = measures[index - 1];
-              time = [amount, name + (amount > 1 ? "s" : ""), "atrás"].join(
-                " "
-              );
-              break;
-          }
-
-          return (
-            <View key={post.id} style={styles.post}>
-              <Image style={styles.image} source={post.writer.icon} />
+      </Header>
+      <Container scroll>
+        {posts.map((post) => (
+          <View
+            key={post.id}
+            style={{
+              width: "90%",
+              flexDirection: "row",
+              gap: 10,
+              padding: 10,
+              borderRadius: 37,
+              borderWidth: 2,
+              borderColor: colors.dark,
+              shadowRadius: 10,
+              shadowOpacity: 0.2,
+            }}
+          >
+            <Image
+              style={{
+                height: 50,
+                aspectRatio: 1,
+                borderRadius: "50%",
+                borderWidth: 2,
+                backgroundColor: colors.dark,
+                borderColor: colors.dark,
+              }}
+              source={post.writer.icon}
+            />
+            <View
+              style={{
+                flex: 1,
+                overflow: "hidden",
+              }}
+            >
               <Text style={{ fontWeight: "bold" }}>{post.writer.name}</Text>
-              <Text style={{ flex: 1 }}>{post.text}</Text>
-              <Text>{time}</Text>
+              <Text>{post.text.slice(0, 180)}</Text>
+            </View>
+            <View style={{ gap: 10 }}>
+              <Pressable onPress={() => {}}>
+                <Feather name="message-circle" size={16} color={colors.dark} />
+              </Pressable>
               {post.writer.uid === auth.currentUser.uid && (
                 <Pressable
-                  onPress={() => {
-                    console.log;
+                  onPress={() =>
                     collectionDelete("posts", post.id).then(() => {
                       loadPosts();
-                    });
-                  }}
-                  style={styles.deleteButton}
+                    })
+                  }
                 >
-                  <Feather name="trash-2" size={24} color="black" />
+                  <Feather name="trash-2" size={16} color={colors.error} />
                 </Pressable>
               )}
             </View>
-          );
-        })}
-      </View>
+            <Text style={{ width: 60 }}>{formatTime(post)}</Text>
+          </View>
+        ))}
+      </Container>
     </>
   );
 }

@@ -1,20 +1,23 @@
-import { useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, TextInput } from "react-native";
 
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 import { isEmail, isLength } from "validator";
 
-import { styles } from "../styles/start";
+import { Feather } from "@expo/vector-icons";
 import { colors } from "../styles/colors";
+import Header from "../components/header";
+import Container from "../components/container";
+import Menu from "../components/menu";
 
 export default function SignIn({ navigation }) {
   const auth = getAuth();
 
   const [error, setError] = useState("None");
 
-  const emailTextInput = useRef();
-  const passwordTextInput = useRef();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   function signIn() {
     var email = emailTextInput.current.value;
@@ -54,60 +57,80 @@ export default function SignIn({ navigation }) {
 
   return (
     <>
-      <View style={styles.header}>
-        <Text style={{ fontWeight: "bold", userSelect: "none" }}>Entrada</Text>
-      </View>
-      <View style={styles.container}>
-        <Text
-          style={{
-            color: error !== "None" ? colors.error : "transparent",
-            userSelect: "none",
-            fontWeight: "600",
-          }}
-        >
-          {error}
-        </Text>
-        <TextInput
-          style={[
-            styles.textField,
-            {
+      <Header title="Entrada" />
+      <Container>
+        <Menu>
+          <Text
+            style={{
+              color: error !== "None" ? colors.error : "transparent",
+              userSelect: "none",
+              fontWeight: "600",
+            }}
+          >
+            {error}
+          </Text>
+          <TextInput
+            style={{
+              width: 200,
+              height: 30,
+              borderRadius: 15,
+              textAlign: "center",
+              borderWidth: 2,
+              borderColor: colors.dark,
+              backgroundColor: colors.backgroundDarker,
               borderColor: error !== "None" ? colors.error : "rgb(46, 46, 46)",
-            },
-          ]}
-          ref={emailTextInput}
-          placeholder="Email"
-          onKeyPress={handleKeyPress}
-        />
-        <TextInput
-          secureTextEntry={true}
-          style={[
-            styles.textField,
-            {
+            }}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            onKeyPress={handleKeyPress}
+          />
+          <TextInput
+            secureTextEntry={true}
+            style={{
+              width: 200,
+              height: 30,
+              borderRadius: 15,
+              textAlign: "center",
+              borderWidth: 2,
+              borderColor: colors.dark,
+              backgroundColor: colors.backgroundDarker,
               borderColor: error !== "None" ? colors.error : "rgb(46, 46, 46)",
-            },
-          ]}
-          ref={passwordTextInput}
-          placeholder="Senha"
-          onKeyPress={handleKeyPress}
-        />
-        <View style={{ flexDirection: "row" }}>
+            }}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Senha"
+            onKeyPress={handleKeyPress}
+          />
+          <Pressable
+            onPress={signIn}
+            style={{
+              width: 50,
+              aspectRatio: 1,
+              borderRadius: "50%",
+              justifyContent: "center",
+              backgroundColor: colors.primary,
+              textAlign: "center",
+              userSelect: "none",
+              borderWidth: 2,
+              borderColor: colors.dark,
+            }}
+          >
+            <Feather name="log-in" size={24} color={colors.dark} />
+          </Pressable>
           <Pressable
             onPress={() => {
               setError("None");
               navigation.navigate("SignUp");
             }}
-            style={styles.otherButton}
           >
-            <Text>Cadastrar</Text>
+            <Text style={{ color: colors.link }}>Cadastrar</Text>
           </Pressable>
-          <Pressable onPress={signIn} style={styles.mainButton}>
-            <Text>Entrar</Text>
+          <Pressable onPress={() => navigation.navigate("PasswordRecovery")}>
+            <Text style={{ color: colors.link }}>Esqueci Minha Senha</Text>
           </Pressable>
-        </View>
-        <Pressable onPress={() => navigation.navigate("PasswordRecovery")}>
-          <Text style={{ color: colors.link }}>Esqueci Minha Senha</Text>
-        </Pressable>
-      </View>
+        </Menu>
+      </Container>
     </>
   );
 }
