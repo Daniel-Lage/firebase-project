@@ -20,8 +20,7 @@ export default function SignIn({ navigation }) {
   const [password, setPassword] = useState("");
 
   function signIn() {
-    var email = emailTextInput.current.value;
-    const password = passwordTextInput.current.value;
+    var emailVal = email;
 
     if (!isLength(password, 6)) {
       setTimeout(() => setError("None"), 2000);
@@ -29,16 +28,16 @@ export default function SignIn({ navigation }) {
       return;
     }
 
-    if (!isEmail(email)) {
-      email += "@gmail.com";
-      if (!isEmail(email)) {
+    if (!isEmail(emailVal)) {
+      emailVal += "@gmail.com";
+      if (!isEmail(emailVal)) {
         setTimeout(() => setError("None"), 2000);
         setError("Email ou Senha incorretos");
         return;
       }
     }
 
-    signInWithEmailAndPassword(auth, email, password).catch(() => {
+    signInWithEmailAndPassword(auth, emailVal, password).catch(() => {
       setTimeout(() => setError("None"), 2000);
       setError("Email ou Senha incorretos");
     });
