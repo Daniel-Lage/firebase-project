@@ -16,22 +16,26 @@ const usersObject = {};
 export default function Feed({ navigation, route }) {
   const auth = getAuth();
 
+  const [error, setError] = useState("None");
   const [postText, setPostText] = useState("");
   const [posts, setPosts] = useState([]);
 
   async function sendPost() {
-    if (postText.length > 180) return;
+    if (postText.length > 180) {
+      setTimeout(() => setError("None"), 2000);
+      return setError("Post não pode incluir mais de 180 caracteres");
+    }
     const writer = auth.currentUser.uid;
     const time = new Date().getTime();
-    const postTitle = writer + time;
-    const post = {
-      text: postText,
-      time,
-      writer,
-    };
 
     setPostText("");
-    insert("posts", postTitle, post).then(() => {
+    insert("posts", writer + time, {
+      text: postText,
+      responses: [],
+      likes: [],
+      time,
+      writer,
+    }).then(() => {
       loadPosts();
     });
   }
@@ -72,6 +76,7 @@ export default function Feed({ navigation, route }) {
             gap: 10,
             backgroundColor: colors.primary,
             alignItems: "center",
+            justifyContent: "center",
             padding: 10,
           }}
         >
@@ -83,9 +88,17 @@ export default function Feed({ navigation, route }) {
               borderWidth: 2,
               borderColor: colors.dark,
             }}
-            onError={() => setPhotoURL(null)}
             source={auth.currentUser.photoURL}
           />
+          <Text
+            style={{
+              position: "absolute",
+              top: -5,
+              color: error === "None" ? "transparent" : colors.error,
+            }}
+          >
+            {error}
+          </Text>
           <TextInput
             style={{
               flex: 1,
@@ -93,7 +106,7 @@ export default function Feed({ navigation, route }) {
               paddingLeft: 10,
               borderRadius: 20,
               borderWidth: 2,
-              borderColor: colors.dark,
+              borderColor: error === "None" ? colors.dark : colors.error,
               backgroundColor: colors.backgroundDarker,
             }}
             value={postText}
@@ -111,7 +124,7 @@ export default function Feed({ navigation, route }) {
           {postText.length > 180 ? (
             <View
               style={{
-                height: 50,
+                height: 30,
                 aspectRatio: 1,
                 borderRadius: "50%",
                 backgroundColor: colors.error,
@@ -122,7 +135,7 @@ export default function Feed({ navigation, route }) {
           ) : (
             <View
               style={{
-                height: 50,
+                height: 30,
                 aspectRatio: 1,
                 borderRadius: "50%",
                 backgroundImage: `conic-gradient(${colors.background} ${
@@ -175,6 +188,7 @@ export default function Feed({ navigation, route }) {
             style={{
               width: "90%",
               flexDirection: "row",
+              alignItems: "center",
               gap: 10,
               padding: 10,
               borderRadius: 37,
