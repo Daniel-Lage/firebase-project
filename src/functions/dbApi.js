@@ -12,7 +12,6 @@ import {
 export async function read(path) {
   const collectionRef = collection(getFirestore(), path);
   const q = query(collectionRef);
-
   const array = [];
 
   const snapshot = await getDocs(q);

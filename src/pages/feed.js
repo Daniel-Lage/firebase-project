@@ -4,21 +4,22 @@ import { getAuth } from "firebase/auth";
 
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
+import { Entypo } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { colors } from "../styles/colors";
-import { insert, read } from "../functions/dbApi";
-import formatTime from "../functions/formatTime";
+import { insert, read, remove, update } from "../functions/dbApi";
 import Header from "../components/header";
 import Container from "../components/container";
+import formatTime from "../functions/formatTime";
 
-const usersObject = {};
+var usersObj = {};
 
 export default function Feed({ navigation, route }) {
   const auth = getAuth();
 
   const [error, setError] = useState("None");
   const [postText, setPostText] = useState("");
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState({});
 
   async function sendPost() {
     if (postText.length > 180) {
@@ -31,7 +32,6 @@ export default function Feed({ navigation, route }) {
     setPostText("");
     insert("posts", writer + time, {
       text: postText,
-      responses: [],
       likes: [],
       time,
       writer,
@@ -40,24 +40,25 @@ export default function Feed({ navigation, route }) {
     });
   }
 
-  function loadPosts() {
-    read("posts").then((posts) => {
-      setPosts(
-        posts.map(({ id, text, time, writer }) => ({
-          id,
-          text,
-          time,
-          writer: usersObject[writer],
-        }))
-      );
+  async function loadPosts() {
+    await read("posts").then((posts) => {
+      const postsObj = {};
+      posts.forEach((post) => {
+        postsObj[post.id] = post;
+      });
+      setPosts(postsObj);
+    });
+  }
+
+  async function loadUsers() {
+    await read("users").then((users) => {
+      usersObj = {};
+      users.forEach((value) => (usersObj[value.id] = value));
     });
   }
 
   useEffect(() => {
-    read("users").then((users) => {
-      users.forEach((value) => (usersObject[value.id] = value));
-      loadPosts();
-    });
+    loadUsers().then(loadPosts());
   }, [route]);
 
   return (
@@ -111,7 +112,7 @@ export default function Feed({ navigation, route }) {
             }}
             value={postText}
             onChangeText={setPostText}
-            placeholder="Escreva seu Post"
+            placeholder="Escreva seu post"
             onKeyPress={(e) => {
               switch (e.code) {
                 case "Enter":
@@ -163,6 +164,7 @@ export default function Feed({ navigation, route }) {
           >
             <Feather name="send" size={24} color={colors.dark} x />
           </Pressable>
+
           <Pressable
             onPress={loadPosts}
             style={{
@@ -182,59 +184,129 @@ export default function Feed({ navigation, route }) {
         </View>
       </Header>
       <Container scroll>
-        {posts.map((post) => (
+        {Object.entries(posts).map(([id, post]) => (
           <View
-            key={post.id}
+            key={id}
             style={{
               width: "90%",
-              flexDirection: "row",
               alignItems: "center",
-              gap: 10,
-              padding: 10,
               borderRadius: 37,
               borderWidth: 2,
+              backgroundColor: colors.background,
               borderColor: colors.dark,
               shadowRadius: 10,
               shadowOpacity: 0.2,
+              padding: 10,
             }}
           >
-            <Image
-              style={{
-                height: 50,
-                aspectRatio: 1,
-                borderRadius: "50%",
-                borderWidth: 2,
-                backgroundColor: colors.dark,
-                borderColor: colors.dark,
-              }}
-              source={post.writer.icon}
-            />
             <View
               style={{
-                flex: 1,
-                overflow: "hidden",
+                width: "100%",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
               }}
             >
-              <Text style={{ fontWeight: "bold" }}>{post.writer.name}</Text>
-              <Text>{post.text.slice(0, 180)}</Text>
+              <Image
+                style={{
+                  height: 50,
+                  aspectRatio: 1,
+                  borderRadius: "50%",
+                  borderWidth: 2,
+                  backgroundColor: colors.dark,
+                  borderColor: colors.dark,
+                }}
+                source={usersObj[post.writer].icon}
+              />
+              <View
+                style={{
+                  flex: 1,
+                  overflow: "hidden",
+                }}
+              >
+                <Text style={{ fontWeight: "bold" }}>
+                  {usersObj[post.writer].name}
+                </Text>
+                <Text>{post.text.slice(0, 180)}</Text>
+              </View>
+              <View style={{ gap: 10 }}>
+                {post.likes.some((user) => user === auth.currentUser.uid) ? (
+                  <Pressable
+                    onPress={() => {
+                      update("posts", id, {
+                        likes: post.likes.filter(
+                          (user) => user !== auth.currentUser.uid
+                        ),
+                      }).then(loadPosts);
+                    }}
+                  >
+                    <Entypo name="heart" size={16} color={colors.error} />
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    onPress={() => {
+                      update("posts", id, {
+                        likes: [...post.likes, auth.currentUser.uid],
+                      }).then(loadPosts);
+                    }}
+                  >
+                    <Entypo
+                      name="heart-outlined"
+                      size={16}
+                      color={colors.error}
+                    />
+                  </Pressable>
+                )}
+                {usersObj[post.writer].uid === auth.currentUser.uid && (
+                  <Pressable
+                    onPress={() =>
+                      remove("posts", post.id).then(() => {
+                        loadPosts();
+                      })
+                    }
+                  >
+                    <Feather name="trash-2" size={16} color={colors.dark} />
+                  </Pressable>
+                )}
+              </View>
+              <Text style={{ width: 60 }}>{formatTime(post)}</Text>
             </View>
-            <View style={{ gap: 10 }}>
-              <Pressable onPress={() => {}}>
-                <Feather name="message-circle" size={16} color={colors.dark} />
-              </Pressable>
-              {post.writer.uid === auth.currentUser.uid && (
-                <Pressable
-                  onPress={() =>
-                    collectionDelete("posts", post.id).then(() => {
-                      loadPosts();
-                    })
+            {post.likes.length > 0 && (
+              <View style={{ flexDirection: "row", gap: 5 }}>
+                <Text>Curtido por</Text>
+                {post.likes.map((userId) => {
+                  if (userId === auth.currentUser.uid) {
+                    return (
+                      <Text
+                        key={userId}
+                        style={{
+                          fontWeight: "bold",
+                          backgroundColor: colors.backgroundDarker,
+                          paddingHorizontal: 5,
+                          borderRadius: 5,
+                        }}
+                      >
+                        Você
+                      </Text>
+                    );
                   }
-                >
-                  <Feather name="trash-2" size={16} color={colors.error} />
-                </Pressable>
-              )}
-            </View>
-            <Text style={{ width: 60 }}>{formatTime(post)}</Text>
+
+                  return (
+                    <Text
+                      key={userId}
+                      style={{
+                        fontWeight: "bold",
+                        backgroundColor: colors.backgroundDarker,
+                        paddingHorizontal: 5,
+                        borderRadius: 5,
+                      }}
+                    >
+                      {usersObj[userId].name}
+                    </Text>
+                  );
+                })}
+              </View>
+            )}
           </View>
         ))}
       </Container>
