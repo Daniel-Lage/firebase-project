@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Image, Pressable, Text, TextInput, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Image, Pressable, Text, View } from "react-native";
 
-import { getAuth, sendEmailVerification, updateProfile } from "firebase/auth";
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 import { Feather } from "@expo/vector-icons";
-import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import { colors } from "../styles/colors";
 import { styles } from "../styles/profile";
 import { dbRead, dbReadFiltered, dbUpdate } from "../functions/dbApi";
@@ -16,13 +14,11 @@ import formatTime from "../functions/formatTime";
 
 const sortingOptions = ["Mais Curtidas", "Recente"];
 var usersObj = {};
-var updated = false;
 
-export default function Profile({ navigation, route }) {
+export default function User({ navigation, route }) {
   const auth = getAuth();
-  const storage = getStorage();
 
-  const [renaming, setRenaming] = useState(false);
+  const [user, setUser] = useState({});
   const [sortBy, setSortBy] = useState(localStorage.sortBy || "Mais Curtidas");
   const [posts, setPosts] = useState([]);
 
@@ -36,69 +32,6 @@ export default function Profile({ navigation, route }) {
     });
   }, [posts, sortBy]);
 
-  const [message, setMessage] = useState(
-    auth.currentUser.emailVerified ? "None" : "Verificar Email"
-  );
-
-  function configurarImagem() {
-    launchImageLibraryAsync({
-      mediaTypes: MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    }).then((result) => {
-      fetch(result.assets[0].uri)
-        .then((response) => response.blob())
-        .then((image) => {
-          const images = ref(storage, auth.currentUser.uid);
-          uploadBytes(images, image).then((snapshot) => {
-            getDownloadURL(snapshot.ref).then((photoURL) => {
-              dbUpdate("users", auth.currentUser.uid, {
-                icon: photoURL,
-              });
-
-              updateProfile(auth.currentUser, {
-                photoURL,
-              }).then(() => {
-                updated = true;
-              });
-            });
-          });
-        });
-    });
-  }
-
-  function configurarNome() {
-    dbUpdate("users", auth.currentUser.uid, {
-      name: renaming,
-    });
-
-    updateProfile(auth.currentUser, {
-      displayName: renaming,
-    }).then(() => {
-      setRenaming(false);
-      updated = true;
-    });
-  }
-
-  function goToUser(uid) {
-    navigation.navigate("User", { uid });
-  }
-
-  function goToProfile() {
-    navigation.navigate("Profile");
-  }
-
-  async function loadPosts() {
-    const postList = await dbReadFiltered(
-      "posts",
-      "writer",
-      "==",
-      auth.currentUser.uid
-    );
-    setPosts(postList);
-  }
-
   async function loadUsers() {
     const users = await dbRead("users");
 
@@ -107,8 +40,27 @@ export default function Profile({ navigation, route }) {
     users.forEach((value) => (usersObj[value.id] = value));
   }
 
+  function goToUser(uid) {
+    if (uid === route.params.uid) return;
+    navigation.navigate("User", { uid });
+  }
+
+  function goToProfile() {
+    navigation.navigate("Profile");
+  }
+
+  async function loadPosts() {
+    const { uid } = route.params;
+    const postList = await dbReadFiltered("posts", "writer", "==", uid);
+    setPosts(postList);
+  }
+
   useEffect(() => {
-    loadUsers().then(loadPosts);
+    const { uid } = route.params;
+    loadUsers().then(() => {
+      setUser(usersObj[uid]);
+      loadPosts();
+    });
   }, [route]);
 
   useEffect(() => {
@@ -121,11 +73,10 @@ export default function Profile({ navigation, route }) {
         title="Seu Perfil"
         lSymbol="home"
         lOnPress={() => {
-          updated = false;
-          navigation.navigate("Feed", { updated });
+          navigation.navigate("Feed");
         }}
-        rSymbol="log-out"
-        rOnPress={() => auth.signOut()}
+        rSymbol="user"
+        rOnPress={goToProfile}
       />
       <Container scroll>
         <Pressable
@@ -146,76 +97,12 @@ export default function Profile({ navigation, route }) {
         >
           <Feather name="refresh-cw" size={24} color={colors.dark} />
         </Pressable>
-        {auth.currentUser.photoURL ? (
-          <View style={{ justifyContent: "flex-end" }}>
-            <Image style={styles.image} source={auth.currentUser.photoURL} />
-            <Pressable
-              style={{ position: "absolute", alignSelf: "flex-end" }}
-              onPress={configurarImagem}
-            >
-              <Feather name="edit-3" size={24} color={colors.dark} />
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable style={styles.image} onPress={configurarImagem}>
-            <Feather name="plus" size={100} color="rgb(172, 172, 172)" />
-          </Pressable>
-        )}
-        {renaming !== false ? (
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <TextInput
-              placeholder="Nome"
-              style={styles.textField}
-              value={renaming}
-              onChangeText={setRenaming}
-              onKeyPress={(e) => {
-                switch (e.code) {
-                  case "Enter":
-                  case "NumpadEnter":
-                    configurarNome();
-                    break;
-                }
-              }}
-            />
-            <Pressable style={styles.button} onPress={configurarNome}>
-              <Feather name="check" size={24} color={colors.dark} />
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.nameDisplay}>
-            <Text style={{ fontWeight: "bold", marginHorizontal: 24 }}>
-              {auth.currentUser.displayName}
-            </Text>
-            <Pressable
-              style={{ position: "absolute", alignSelf: "flex-end" }}
-              onPress={() => setRenaming("")}
-            >
-              <Feather name="edit-3" size={24} color={colors.dark} />
-            </Pressable>
-          </View>
-        )}
-        {message === "None" || (
-          <Pressable
-            onPress={() =>
-              sendEmailVerification(auth.currentUser).then(() =>
-                setMessage(
-                  "Email Enviado, entre novamente quando verificar Email"
-                )
-              )
-            }
-          >
-            <Text
-              style={{
-                color:
-                  message === "Verificar Email" ? colors.error : colors.primary,
-                userSelect: "none",
-                fontWeight: "600",
-              }}
-            >
-              {message}
-            </Text>
-          </Pressable>
-        )}
+        {user && <Image style={styles.image} source={user.icon} />}
+        <View style={styles.nameDisplay}>
+          <Text style={{ fontWeight: "bold", marginHorizontal: 24 }}>
+            {user.name}
+          </Text>
+        </View>
         <View
           style={{
             width: "90%",
@@ -289,7 +176,7 @@ export default function Profile({ navigation, route }) {
                   backgroundColor: colors.dark,
                   borderColor: colors.dark,
                 }}
-                source={auth.currentUser.photoURL}
+                source={user.icon}
               />
               <View
                 style={{
@@ -297,9 +184,7 @@ export default function Profile({ navigation, route }) {
                   overflow: "hidden",
                 }}
               >
-                <Text style={{ fontWeight: "bold" }}>
-                  {auth.currentUser.displayName}
-                </Text>
+                <Text style={{ fontWeight: "bold" }}>{user.name}</Text>
                 <Text>{post.text.slice(0, 180)}</Text>
               </View>
               <View style={{ gap: 10 }}>
@@ -350,7 +235,7 @@ export default function Profile({ navigation, route }) {
                 {post.likes.map((userId) => {
                   if (userId === auth.currentUser.uid) {
                     return (
-                      <Pressable key={userId}>
+                      <Pressable key={userId} onPress={goToProfile}>
                         <Text
                           key={userId}
                           style={{

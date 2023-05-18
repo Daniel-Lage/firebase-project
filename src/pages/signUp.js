@@ -14,7 +14,7 @@ import { colors } from "../styles/colors";
 import Header from "../components/header";
 import Container from "../components/container";
 import Menu from "../components/menu";
-import { insert } from "../functions/dbApi";
+import { dbCreate } from "../functions/dbApi";
 
 export default function SignUp({ navigation }) {
   const auth = getAuth();
@@ -53,7 +53,7 @@ export default function SignUp({ navigation }) {
             "https://firebasestorage.googleapis.com/v0/b/fir-login-9a729.appspot.com/o/dXJT53tYuCTt3NuiR4DgP8zLrpG2?alt=media&token=a4145c21-ad55-472b-9021-677052dad812",
         });
 
-        insert("users", auth.currentUser.uid, {
+        dbCreate("users", auth.currentUser.uid, {
           uid: auth.currentUser.uid,
           followers: [],
           following: [],

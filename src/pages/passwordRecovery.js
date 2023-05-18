@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput } from "react-native";
 
 import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 
-import { isEmail, isLength } from "validator";
+import { isEmail } from "validator";
 
 import { Feather } from "@expo/vector-icons";
 import { colors } from "../styles/colors";
